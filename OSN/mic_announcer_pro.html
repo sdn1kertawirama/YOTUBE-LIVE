@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mic Announcer Pro - Canvas Simulator</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'glow': 'glow 2s ease-in-out infinite alternate',
+          },
+          keyframes: {
+            glow: {
+              '0%': { boxShadow: '0 0 15px rgba(16, 185, 129, 0.3)' },
+              '100%': { boxShadow: '0 0 35px rgba(16, 185, 129, 0.8)' },
+            }
+          }
+        },
+      },
+    }
+  </script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    /* Custom Scrollbar & Canvas Style */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #020617;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-between p-4 md:p-6 font-sans select-none antialiased">
+
+  <!-- Top Navigation Header -->
+  <header class="w-full max-w-xl flex justify-between items-center bg-slate-900/90 backdrop-blur-md p-3 md:p-4 rounded-2xl border border-slate-800/80 shadow-lg">
+    <div class="flex items-center gap-3">
+      <div class="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+        <i data-lucide="volume-2" class="text-emerald-400 w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="text-base md:text-lg font-bold tracking-wide text-slate-100 leading-none">MIC ANNOUNCER PRO</h1>
+        <span class="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Canvas Visualizer Edition</span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <!-- Sound Settings Toggle Button -->
+      <button 
+        id="btnToggleSettings"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all duration-200 bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 active:scale-95"
+      >
+        <i data-lucide="music" class="w-4 h-4"></i>
+        <span>Pengaturan Suara</span>
+      </button>
+
+      <!-- Mode Selector -->
+      <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
+        <i data-lucide="settings" class="text-slate-400 w-3.5 h-3.5"></i>
+        <select 
+          id="selectMode"
+          class="bg-transparent text-xs font-semibold outline-none cursor-pointer disabled:opacity-50 text-slate-300 py-1"
+        >
+          <option value="HOLD" class="bg-slate-900">Mode: TAHAN</option>
+          <option value="TOGGLE" class="bg-slate-900">Mode: KLIK</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Interactive Area -->
+  <main class="flex flex-col items-center gap-6 w-full max-w-md my-auto py-4">
+    
+    <!-- Sound Customization Modal / Panel -->
+    <div id="soundSettingsPanel" class="hidden w-full bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+      <div class="flex justify-between items-center border-b border-slate-800/80 pb-3">
+        <div class="flex items-center gap-2 text-sm font-bold text-slate-200">
+          <i data-lucide="music" class="text-emerald-400 w-4 h-4"></i>
+          <span>Pengaturan Preset & Custom Suara</span>
+        </div>
+        <button id="btnCloseSettings" class="text-xs text-slate-400 hover:text-white transition-colors">✕ Tutup</button>
+      </div>
+
+      <!-- Presets Grid -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs text-slate-400 font-semibold">Pilih Preset Bawaan:</label>
+        <div class="grid grid-cols-2 gap-2" id="presetGrid">
+          <button data-preset="airport" class="preset-btn flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all bg-emerald-950/60 border-emerald-500 text-emerald-300">
+            <span>✈️ Bandara Classic</span>
+            <i data-lucide="check" class="check-icon text-emerald-400 w-3.5 h-3.5"></i>
+          </button>
+          <button data-preset="supermarket" class="preset-btn flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400">
+            <span>🛒 Supermarket</span>
+            <i data-lucide="check" class="check-icon hidden text-emerald-400 w-3.5 h-3.5"></i>
+          </button>
+          <button data-preset="station" class="preset-btn flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400">
+            <span>🚆 Stasiun Kereta</span>
+            <i data-lucide="check" class="check-icon hidden text-emerald-400 w-3.5 h-3.5"></i>
+          </button>
+          <button data-preset="marimba" class="preset-btn flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400">
+            <span>🎵 Soft Marimba</span>
+            <i data-lucide="check" class="check-icon hidden text-emerald-400 w-3.5 h-3.5"></i>
+          </button>
+          <button data-preset="radio" class="preset-btn flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400">
+            <span>📻 Tactical Radio</span>
+            <i data-lucide="check" class="check-icon hidden text-emerald-400 w-3.5 h-3.5"></i>
+          </button>
+          <button data-preset="custom" class="preset-btn flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400">
+            <span>📁 Custom MP3/WAV</span>
+            <i data-lucide="check" class="check-icon hidden text-emerald-400 w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Upload Section for Custom Audio -->
+      <div id="customAudioSection" class="hidden flex-col gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+        <div class="font-semibold text-slate-300">Unggah Audio Milikmu (.mp3 / .wav):</div>
+        
+        <!-- Start Sound Upload -->
+        <div class="flex items-center justify-between gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800">
+          <div class="truncate flex-1">
+            <span class="text-slate-400 block text-[10px]">SUARA MASUK:</span>
+            <span id="startFileName" class="text-slate-200 font-mono text-[11px] truncate block">Belum ada file...</span>
+          </div>
+          <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-slate-200 flex items-center gap-1 shrink-0 transition-colors">
+            <i data-lucide="upload" class="w-3 h-3"></i>
+            <span>Pilih File</span>
+            <input type="file" id="inputStartAudio" accept="audio/*" class="hidden" />
+          </label>
+        </div>
+
+        <!-- End Sound Upload -->
+        <div class="flex items-center justify-between gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800">
+          <div class="truncate flex-1">
+            <span class="text-slate-400 block text-[10px]">SUARA PENUTUP:</span>
+            <span id="endFileName" class="text-slate-200 font-mono text-[11px] truncate block">Belum ada file...</span>
+          </div>
+          <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-slate-200 flex items-center gap-1 shrink-0 transition-colors">
+            <i data-lucide="upload" class="w-3 h-3"></i>
+            <span>Pilih File</span>
+            <input type="file" id="inputEndAudio" accept="audio/*" class="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Chime Volume Slider -->
+      <div class="flex flex-col gap-1.5 pt-1">
+        <div class="flex justify-between text-xs text-slate-400">
+          <span>Volume Ting-Tong</span>
+          <span id="volumeValText" class="font-mono text-emerald-400 font-semibold">50%</span>
+        </div>
+        <input 
+          type="range" 
+          id="chimeVolumeSlider"
+          min="0" 
+          max="1" 
+          step="0.05"
+          value="0.5"
+          class="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg appearance-none"
+        />
+      </div>
+
+      <!-- Preview Test Buttons -->
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button id="btnTestStart" class="flex-1 flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 py-2 rounded-xl text-xs font-semibold text-slate-200 transition-colors active:scale-95">
+          <i data-lucide="play" class="text-emerald-400 w-3.5 h-3.5"></i>
+          <span>Tes Ting Tong Awal</span>
+        </button>
+        <button id="btnTestEnd" class="flex-1 flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 py-2 rounded-xl text-xs font-semibold text-slate-200 transition-colors active:scale-95">
+          <i data-lucide="play" class="text-amber-400 w-3.5 h-3.5"></i>
+          <span>Tes Ting Tong Akhir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Default Main Interface -->
+    <div id="mainInterface" class="w-full flex flex-col items-center gap-6">
+      
+      <!-- Status Container with Canvas Spectrum -->
+      <div id="statusBox" class="w-full rounded-2xl border border-slate-800/80 bg-slate-900 p-4 transition-all duration-300 flex flex-col items-center shadow-2xl relative overflow-hidden">
+        
+        <!-- Status Text -->
+        <div id="statusText" class="text-xs font-black tracking-[0.2em] mb-3 text-slate-400 animate-pulse z-10">
+          MIC OFF (STANDBY)
+        </div>
+        
+        <!-- HTML5 Audio Spectrum Visualizer Canvas Container -->
+        <div class="h-20 w-full relative flex items-center justify-center rounded-xl bg-slate-950/60 border border-slate-800/50 overflow-hidden">
+          
+          <!-- Idle Mic Off Icon -->
+          <i id="iconMicOff" data-lucide="mic-off" class="w-10 h-10 text-slate-700 transition-opacity duration-300"></i>
+          
+          <!-- Loading Dots Animation -->
+          <div id="loadingDots" class="hidden flex gap-2 z-10">
+            <span class="w-3 h-3 bg-amber-400 rounded-full animate-bounce" style="animation-delay: 0s;"></span>
+            <span class="w-3 h-3 bg-amber-400 rounded-full animate-bounce" style="animation-delay: 0.2s;"></span>
+            <span class="w-3 h-3 bg-amber-400 rounded-full animate-bounce" style="animation-delay: 0.4s;"></span>
+          </div>
+
+          <!-- Spectrum Canvas -->
+          <canvas id="visualizerCanvas" class="absolute inset-0 w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Big On-Screen Push-To-Talk Button -->
+      <button
+        id="btnPtt"
+        class="relative flex flex-col items-center justify-center w-48 h-48 rounded-full transition-all duration-200 ease-out select-none cursor-pointer my-2 bg-gradient-to-b from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 shadow-[0_12px_28px_rgba(0,0,0,0.6)] active:scale-95 border border-slate-600/30 group"
+      >
+        <div id="btnRing" class="absolute inset-0 rounded-full border-2 border-emerald-500/0 transition-all duration-300"></div>
+        <i id="btnPttIcon" data-lucide="mic" class="w-12 h-12 mb-1 text-slate-300 transition-transform group-hover:scale-110"></i>
+        <span id="btnPttLabel" class="text-xl font-black tracking-widest text-slate-300">TALK</span>
+      </button>
+
+      <!-- Trigger Hotkey Binding Panel -->
+      <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center gap-3 shadow-lg">
+        <div class="flex items-center gap-2 text-xs text-slate-400 font-semibold tracking-wide uppercase">
+          <i id="triggerTypeIcon" data-lucide="keyboard" class="w-4 h-4 text-emerald-400"></i>
+          <span>Tombol Hotkey / Trigger</span>
+        </div>
+        
+        <div class="flex items-center gap-3 w-full justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+          <div class="flex items-center gap-2 pl-2">
+            <span class="text-xs text-slate-400">Tombol Aktif:</span>
+            <span id="triggerLabel" class="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2.5 py-1 rounded-lg font-mono">
+              Spacebar
+            </span>
+          </div>
+          
+          <button
+            id="btnChangeKey"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95"
+          >
+            Ubah Tombol
+          </button>
+        </div>
+
+        <!-- Preset Status Indicator -->
+        <div class="flex items-center justify-between w-full px-1 text-[11px] text-slate-500 pt-1 border-t border-slate-800/60">
+          <span>Preset Suara Terpilih:</span>
+          <span id="presetDisplayLabel" class="text-slate-300 font-semibold capitalize font-mono">airport</span>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer Info Banner -->
+  <footer class="w-full max-w-xl flex items-center gap-2.5 text-xs text-slate-400 bg-slate-900/60 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-800/50">
+    <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+    <span>Klik <b>"Pengaturan Suara"</b> di kanan atas untuk mengganti ke preset Bandara, Supermarket, atau file MP3/WAV milikmu!</span>
+  </footer>
+
+  <!-- JavaScript Application Engine -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Global Application State
+    let status = 'IDLE'; // 'IDLE' | 'STARTING' | 'ACTIVE' | 'STOPPING'
+    let mode = 'HOLD';   // 'HOLD' | 'TOGGLE'
+    let triggerConfig = { type: 'keyboard', code: 'Space', label: 'Spacebar' };
+    let isListeningKey = false;
+    let isPressed = false;
+
+    let soundPreset = 'airport';
+    let chimeVolume = 0.5;
+    let customStartAudio = null;
+    let customEndAudio = null;
+    let customStartFileName = '';
+    let customEndFileName = '';
+
+    // Audio & Animation System Variables
+    let audioCtx = null;
+    let streamRef = null;
+    let animationRef = null;
+    let analyserNode = null;
+    let audioDataArray = null;
+
+    // DOM Elements Mapping
+    const btnToggleSettings = document.getElementById('btnToggleSettings');
+    const btnCloseSettings = document.getElementById('btnCloseSettings');
+    const soundSettingsPanel = document.getElementById('soundSettingsPanel');
+    const mainInterface = document.getElementById('mainInterface');
+    const selectMode = document.getElementById('selectMode');
+    
+    const statusBox = document.getElementById('statusBox');
+    const statusText = document.getElementById('statusText');
+    const iconMicOff = document.getElementById('iconMicOff');
+    const loadingDots = document.getElementById('loadingDots');
+    
+    const canvas = document.getElementById('visualizerCanvas');
+    const canvasCtx = canvas.getContext('2d');
+
+    const btnPtt = document.getElementById('btnPtt');
+    const btnPttIcon = document.getElementById('btnPttIcon');
+    const btnPttLabel = document.getElementById('btnPttLabel');
+    const btnRing = document.getElementById('btnRing');
+
+    const triggerLabel = document.getElementById('triggerLabel');
+    const triggerTypeIcon = document.getElementById('triggerTypeIcon');
+    const btnChangeKey = document.getElementById('btnChangeKey');
+    const presetDisplayLabel = document.getElementById('presetDisplayLabel');
+
+    const chimeVolumeSlider = document.getElementById('chimeVolumeSlider');
+    const volumeValText = document.getElementById('volumeValText');
+    const customAudioSection = document.getElementById('customAudioSection');
+    const inputStartAudio = document.getElementById('inputStartAudio');
+    const inputEndAudio = document.getElementById('inputEndAudio');
+    const startFileName = document.getElementById('startFileName');
+    const endFileName = document.getElementById('endFileName');
+    const btnTestStart = document.getElementById('btnTestStart');
+    const btnTestEnd = document.getElementById('btnTestEnd');
+
+    // Audio Context Getter / Resumer
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // Tone Synthesizer Function
+    function playTone(freq, duration, delay = 0, type = 'sine', gainMultiplier = 1) {
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = type;
+      osc.frequency.value = freq;
+
+      const startTime = ctx.currentTime + delay;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      const targetGain = 0.4 * chimeVolume * gainMultiplier;
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(targetGain, startTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    // Custom Audio Player Helper
+    function playCustomAudio(audioUrl) {
+      return new Promise((resolve) => {
+        if (!audioUrl) { resolve(); return; }
+        const audio = new Audio(audioUrl);
+        audio.volume = chimeVolume;
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve();
+        audio.play().catch(() => resolve());
+      });
+    }
+
+    // Chime Preset Melodies
+    async function playStartChime() {
+      if (soundPreset === 'custom' && customStartAudio) {
+        await playCustomAudio(customStartAudio);
+        return;
+      }
+
+      switch (soundPreset) {
+        case 'supermarket':
+          playTone(392.00, 0.6, 0.0);  // G4
+          playTone(523.25, 0.6, 0.3);  // C5
+          playTone(659.25, 0.9, 0.6);  // E5
+          await new Promise(r => setTimeout(r, 1400));
+          break;
+
+        case 'station':
+          playTone(440.00, 0.5, 0.0);  // A4
+          playTone(554.37, 0.5, 0.25); // C#5
+          playTone(659.25, 0.5, 0.50); // E5
+          playTone(880.00, 0.8, 0.75); // A5
+          await new Promise(r => setTimeout(r, 1600));
+          break;
+
+        case 'marimba':
+          playTone(523.25, 0.4, 0.0, 'triangle', 1.2); // C5
+          playTone(659.25, 0.4, 0.15, 'triangle', 1.2); // E5
+          playTone(783.99, 0.6, 0.30, 'triangle', 1.2); // G5
+          await new Promise(r => setTimeout(r, 1000));
+          break;
+
+        case 'radio':
+          playTone(1200, 0.08, 0.0, 'square', 0.5);
+          playTone(2400, 0.12, 0.08, 'square', 0.5);
+          await new Promise(r => setTimeout(r, 300));
+          break;
+
+        case 'airport':
+        default:
+          playTone(523.25, 0.8, 0.0);  // C5
+          playTone(659.25, 1.0, 0.35); // E5
+          await new Promise(r => setTimeout(r, 1200));
+          break;
+      }
+    }
+
+    async function playEndChime() {
+      if (soundPreset === 'custom' && customEndAudio) {
+        await playCustomAudio(customEndAudio);
+        return;
+      }
+
+      switch (soundPreset) {
+        case 'supermarket':
+          playTone(659.25, 0.6, 0.0);  // E5
+          playTone(523.25, 0.6, 0.3);  // C5
+          playTone(392.00, 0.9, 0.6);  // G4
+          await new Promise(r => setTimeout(r, 1400));
+          break;
+
+        case 'station':
+          playTone(880.00, 0.5, 0.0);  // A5
+          playTone(659.25, 0.5, 0.25); // E5
+          playTone(554.37, 0.5, 0.50); // C#5
+          playTone(440.00, 0.8, 0.75); // A4
+          await new Promise(r => setTimeout(r, 1600));
+          break;
+
+        case 'marimba':
+          playTone(783.99, 0.4, 0.0, 'triangle', 1.2); // G5
+          playTone(523.25, 0.6, 0.15, 'triangle', 1.2); // C5
+          await new Promise(r => setTimeout(r, 800));
+          break;
+
+        case 'radio':
+          playTone(2400, 0.08, 0.0, 'square', 0.5);
+          playTone(1200, 0.12, 0.08, 'square', 0.5);
+          await new Promise(r => setTimeout(r, 300));
+          break;
+
+        case 'airport':
+        default:
+          playTone(659.25, 0.8, 0.0);  // E5
+          playTone(523.25, 1.0, 0.35); // C5
+          await new Promise(r => setTimeout(r, 1200));
+          break;
+      }
+    }
+
+    // Resize Canvas Dimensions dynamically
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * (window.devicePixelRatio || 1);
+      canvas.height = rect.height * (window.devicePixelRatio || 1);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Canvas Spectrum Render Loop
+    function renderCanvasSpectrum() {
+      if (status !== 'ACTIVE') {
+        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      const width = canvas.width;
+      const height = canvas.height;
+
+      canvasCtx.clearRect(0, 0, width, height);
+
+      const numBars = 32;
+      const barGap = 4 * (window.devicePixelRatio || 1);
+      const totalGaps = (numBars - 1) * barGap;
+      const barWidth = (width - totalGaps) / numBars;
+
+      if (analyserNode && audioDataArray) {
+        analyserNode.getByteFrequencyData(audioDataArray);
+      }
+
+      for (let i = 0; i < numBars; i++) {
+        let barHeight = 0;
+        
+        if (audioDataArray && audioDataArray.length > 0) {
+          const index = Math.floor((i / numBars) * (audioDataArray.length / 2));
+          barHeight = (audioDataArray[index] / 255) * (height * 0.85);
+        } else {
+          // Simulated fallback visual wave
+          barHeight = (Math.sin(Date.now() * 0.01 + i * 0.3) * 0.4 + 0.5) * (height * 0.7);
+        }
+
+        barHeight = Math.max(6 * (window.devicePixelRatio || 1), barHeight);
+
+        const x = i * (barWidth + barGap);
+        const y = (height - barHeight) / 2;
+
+        // Gradient for Canvas Bars
+        const gradient = canvasCtx.createLinearGradient(0, y, 0, y + barHeight);
+        gradient.addColorStop(0, '#34d399'); // Emerald 400
+        gradient.addColorStop(0.5, '#10b981'); // Emerald 500
+        gradient.addColorStop(1, '#047857'); // Emerald 700
+
+        canvasCtx.fillStyle = gradient;
+        canvasCtx.beginPath();
+        if (canvasCtx.roundRect) {
+          canvasCtx.roundRect(x, y, barWidth, barHeight, 4 * (window.devicePixelRatio || 1));
+        } else {
+          canvasCtx.rect(x, y, barWidth, barHeight);
+        }
+        canvasCtx.fill();
+      }
+
+      animationRef = requestAnimationFrame(renderCanvasSpectrum);
+    }
+
+    // Start Audio Capture & Visualizer
+    async function startMicVisualizer() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef = stream;
+        const ctx = getAudioContext();
+        const source = ctx.createMediaStreamSource(stream);
+        
+        analyserNode = ctx.createAnalyser();
+        analyserNode.fftSize = 128;
+        source.connect(analyserNode);
+
+        audioDataArray = new Uint8Array(analyserNode.frequencyBinCount);
+        renderCanvasSpectrum();
+      } catch (err) {
+        console.warn('Microphone access denied or unavailable. Running canvas animation mode.', err);
+        audioDataArray = null;
+        renderCanvasSpectrum();
+      }
+    }
+
+    function stopMicVisualizer() {
+      if (animationRef) cancelAnimationFrame(animationRef);
+      if (streamRef) {
+        streamRef.getTracks().forEach(track => track.stop());
+        streamRef = null;
+      }
+      analyserNode = null;
+      audioDataArray = null;
+      canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Sync UI with Application State
+    function updateUI() {
+      selectMode.disabled = (status !== 'IDLE');
+      btnChangeKey.disabled = (status !== 'IDLE' || isListeningKey);
+
+      // Status Box Styles
+      statusBox.className = "w-full rounded-2xl border p-4 transition-all duration-300 flex flex-col items-center shadow-2xl relative overflow-hidden ";
+      if (status === 'ACTIVE') {
+        statusBox.className += "border-emerald-500/50 bg-emerald-950/20 shadow-[0_0_30px_rgba(16,185,129,0.15)]";
+        statusText.className = "text-xs font-black tracking-[0.2em] mb-3 text-emerald-400 animate-pulse z-10";
+        statusText.innerText = "MIC ON (SILAKAN BICARA)";
+      } else if (status === 'STARTING' || status === 'STOPPING') {
+        statusBox.className += "border-amber-500/50 bg-amber-950/20";
+        statusText.className = "text-xs font-black tracking-[0.2em] mb-3 text-amber-400 animate-pulse z-10";
+        statusText.innerText = status === 'STARTING' ? "🔔 TING TONG MASUK..." : "🔔 TING TONG PENUTUP...";
+      } else {
+        statusBox.className += "border-slate-800/80 bg-slate-900";
+        statusText.className = "text-xs font-black tracking-[0.2em] mb-3 text-slate-400 animate-pulse z-10";
+        statusText.innerText = "MIC OFF (STANDBY)";
+      }
+
+      // Display Icons / Loading
+      iconMicOff.classList.toggle('hidden', status !== 'IDLE');
+      loadingDots.classList.toggle('hidden', status !== 'STARTING' && status !== 'STOPPING');
+
+      // PTT Button Dynamic Classes
+      btnPtt.className = "relative flex flex-col items-center justify-center w-48 h-48 rounded-full transition-all duration-200 ease-out select-none cursor-pointer my-2 border group ";
+      
+      if (status === 'IDLE') {
+        btnPtt.className += "bg-gradient-to-b from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 border-slate-600/30 shadow-[0_12px_28px_rgba(0,0,0,0.6)] active:scale-95";
+        btnPttLabel.className = "text-xl font-black tracking-widest text-slate-300";
+        btnPttLabel.innerText = "TALK";
+        btnPttIcon.className = "w-12 h-12 mb-1 text-slate-300 transition-transform group-hover:scale-110";
+        btnRing.className = "absolute inset-0 rounded-full border-2 border-emerald-500/0 transition-all duration-300";
+      } else if (status === 'ACTIVE') {
+        btnPtt.className += "bg-gradient-to-b from-emerald-500 to-emerald-700 border-emerald-400/50 shadow-[0_0_50px_rgba(16,185,129,0.6)] scale-95";
+        btnPttLabel.className = "text-xl font-black tracking-widest text-white";
+        btnPttLabel.innerText = mode === 'TOGGLE' ? "STOP" : "TALK";
+        btnPttIcon.className = "w-12 h-12 mb-1 text-white transition-transform group-hover:scale-110";
+        btnRing.className = "absolute -inset-2 rounded-full border-2 border-emerald-400 animate-ping opacity-75";
+      } else {
+        btnPtt.className += "bg-gradient-to-b from-amber-500 to-amber-600 border-amber-400/50 shadow-[0_0_30px_rgba(245,158,11,0.5)] scale-95";
+        btnPttLabel.className = "text-xl font-black tracking-widest text-white";
+        btnPttLabel.innerText = "TALK";
+        btnPttIcon.className = "w-12 h-12 mb-1 text-white transition-transform";
+        btnRing.className = "absolute inset-0 rounded-full border-2 border-amber-400/50 transition-all duration-300";
+      }
+
+      // Hotkey Keybind Button Text
+      if (isListeningKey) {
+        btnChangeKey.innerText = "Tekan Tombol...";
+        btnChangeKey.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-amber-500 text-slate-950 animate-pulse";
+      } else {
+        btnChangeKey.innerText = "Ubah Tombol";
+        btnChangeKey.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95";
+      }
+
+      // Sync Text Display
+      triggerLabel.innerText = triggerConfig.label;
+      presetDisplayLabel.innerText = soundPreset === 'custom' ? (customStartFileName ? 'Custom File' : 'Custom Audio') : soundPreset;
+    }
+
+    // Main Sequence Handlers
+    async function startSequence() {
+      status = 'STARTING';
+      updateUI();
+      await playStartChime();
+
+      if (mode === 'HOLD' && !isPressed) {
+        stopSequence();
+        return;
+      }
+
+      status = 'ACTIVE';
+      updateUI();
+      startMicVisualizer();
+    }
+
+    async function stopSequence() {
+      status = 'STOPPING';
+      updateUI();
+      stopMicVisualizer();
+      await playEndChime();
+      status = 'IDLE';
+      updateUI();
+    }
+
+    async function triggerPress() {
+      if (status !== 'IDLE' && mode === 'HOLD') return;
+
+      if (mode === 'TOGGLE') {
+        if (status === 'IDLE') await startSequence();
+        else if (status === 'ACTIVE') await stopSequence();
+      } else {
+        isPressed = true;
+        if (status === 'IDLE') await startSequence();
+      }
+    }
+
+    async function triggerRelease() {
+      if (mode === 'HOLD') {
+        isPressed = false;
+        if (status === 'ACTIVE') await stopSequence();
+      }
+    }
+
+    // PTT Button Event Listeners
+    btnPtt.addEventListener('mousedown', triggerPress);
+    btnPtt.addEventListener('mouseup', triggerRelease);
+    btnPtt.addEventListener('mouseleave', triggerRelease);
+
+    btnPtt.addEventListener('touchstart', (e) => { e.preventDefault(); triggerPress(); });
+    btnPtt.addEventListener('touchend', (e) => { e.preventDefault(); triggerRelease(); });
+
+    // Mode Selector Handler
+    selectMode.addEventListener('change', (e) => { mode = e.target.value; });
+
+    // Global Key & Mouse Bindings
+    window.addEventListener('keydown', (e) => {
+      if (isListeningKey) {
+        e.preventDefault();
+        let label = e.code;
+        if (e.key === ' ') label = 'Spacebar';
+        else if (e.key.length === 1) label = e.key.toUpperCase();
+        
+        triggerConfig = { type: 'keyboard', code: e.code, label };
+        isListeningKey = false;
+        triggerTypeIcon.setAttribute('data-lucide', 'keyboard');
+        lucide.createIcons();
+        updateUI();
+        return;
+      }
+      if (triggerConfig.type === 'keyboard' && e.code === triggerConfig.code && !e.repeat) {
+        triggerPress();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (triggerConfig.type === 'keyboard' && e.code === triggerConfig.code) {
+        triggerRelease();
+      }
+    });
+
+    window.addEventListener('mousedown', (e) => {
+      if (isListeningKey) {
+        e.preventDefault();
+        const mouseNames = ['Klik Kiri', 'Klik Tengah', 'Klik Kanan', 'Mouse 4 (Side)', 'Mouse 5 (Side)'];
+        const label = mouseNames[e.button] || `Mouse Button ${e.button}`;
+        triggerConfig = { type: 'mouse', code: e.button, label };
+        isListeningKey = false;
+        triggerTypeIcon.setAttribute('data-lucide', 'mouse-pointer');
+        lucide.createIcons();
+        updateUI();
+        return;
+      }
+      if (triggerConfig.type === 'mouse' && e.button === triggerConfig.code) {
+        triggerPress();
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (triggerConfig.type === 'mouse' && e.button === triggerConfig.code) {
+        triggerRelease();
+      }
+    });
+
+    btnChangeKey.addEventListener('click', () => {
+      isListeningKey = true;
+      updateUI();
+    });
+
+    // Settings Modal Toggle Logic
+    btnToggleSettings.addEventListener('click', () => {
+      const isHidden = soundSettingsPanel.classList.contains('hidden');
+      soundSettingsPanel.classList.toggle('hidden', !isHidden);
+      mainInterface.classList.toggle('hidden', isHidden);
+      btnToggleSettings.className = isHidden 
+        ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all duration-200 bg-emerald-500 text-slate-950 border-emerald-400 shadow-md'
+        : 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all duration-200 bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700';
+    });
+
+    btnCloseSettings.addEventListener('click', () => {
+      soundSettingsPanel.classList.add('hidden');
+      mainInterface.classList.remove('hidden');
+      btnToggleSettings.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all duration-200 bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700';
+    });
+
+    // Preset Selection Grid Handlers
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        soundPreset = btn.getAttribute('data-preset');
+        
+        document.querySelectorAll('.preset-btn').forEach(b => {
+          b.className = "preset-btn flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400";
+          b.querySelector('.check-icon').classList.add('hidden');
+        });
+
+        btn.className = "preset-btn flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all bg-emerald-950/60 border-emerald-500 text-emerald-300";
+        btn.querySelector('.check-icon').classList.remove('hidden');
+
+        customAudioSection.classList.toggle('hidden', soundPreset !== 'custom');
+        customAudioSection.classList.toggle('flex', soundPreset === 'custom');
+        updateUI();
+      });
+    });
+
+    // File Upload Handlers for Custom Audio
+    inputStartAudio.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        customStartAudio = URL.createObjectURL(file);
+        customStartFileName = file.name;
+        startFileName.innerText = file.name;
+      }
+    });
+
+    inputEndAudio.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        customEndAudio = URL.createObjectURL(file);
+        customEndFileName = file.name;
+        endFileName.innerText = file.name;
+      }
+    });
+
+    // Volume Slider Handler
+    chimeVolumeSlider.addEventListener('input', (e) => {
+      chimeVolume = parseFloat(e.target.value);
+      volumeValText.innerText = `${Math.round(chimeVolume * 100)}%`;
+    });
+
+    // Audio Test Buttons
+    btnTestStart.addEventListener('click', playStartChime);
+    btnTestEnd.addEventListener('click', playEndChime);
+
+    // Initial Start UI Sync
+    updateUI();
+  </script>
+</body>
+</html>
