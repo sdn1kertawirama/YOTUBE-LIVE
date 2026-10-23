@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Absensi QR Code Siswa</title>
+    <!-- Library HTML5 QR Code Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; text-align: center; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        #reader { width: 100%; border-radius: 8px; overflow: hidden; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 5px; font-size: 1.1em; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #e2e3e5; color: #383d41; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Absensi QR Code Siswa</h2>
+        <p>Arahkan kartu siswa ke kamera scanner</p>
+        
+        <div id="reader"></div>
+        
+        <div id="result" class="info">Menunggu scan...</div>
+    </div>
+
+    <script>
+        // Ganti dengan URL Web App Google Apps Script Anda yang panjang
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxt2LmWOvmb-zvN5CZThK6Um7bRfRF9VD0nyj809jXri2xVyIFwvLeIx3K4eOYyXvxLgQ/exec";
+
+        let isProcessing = false;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            let resultDiv = document.getElementById('result');
+            resultDiv.className = "info";
+            resultDiv.innerText = "Memproses NISN: " + decodedText + "...";
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ nisn: decodedText })
+            })
+            .then(res => res.json())
+            .then(response => {
+                if (response.result === 'success') {
+                    resultDiv.className = "success";
+                    resultDiv.innerHTML = `✅ HADIR!<br>Nama: ${response.nama}<br>Tanggal: ${response.tanggal} | Jam: ${response.jam}`;
+                } else {
+                    resultDiv.className = "error";
+                    resultDiv.innerHTML = `❌ Gagal: ${response.message}`;
+                }
+                
+                // Jeda 3 detik sebelum bisa scan kartu berikutnya
+                setTimeout(() => {
+                    isProcessing = false;
+                    resultDiv.className = "info";
+                    resultDiv.innerText = "Arahkan kartu siswa berikutnya...";
+                }, 3000);
+            })
+            .catch(err => {
+                console.error(err);
+                resultDiv.className = "error";
+                resultDiv.innerText = "Gagal terhubung ke server/spreadsheet.";
+                setTimeout(() => { isProcessing = false; }, 3000);
+            });
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+
+</body>
+</html>
